@@ -13,6 +13,21 @@ use Illuminate\Foundation\Inspiring;
 |
 */
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->describe('Display an inspiring quote');
+Artisan::command('importa', function () {
+    $this->comment('Importando ...');
+    \App\Establecimiento::truncate();
+    Excel::load('storage/app/public/establecimientos.xlsx', function ($reader) {
+        $sheet = $reader->get()->first();
+        $sheet->each(function ($row) {
+            if ($row->nombre_oficial) {
+                \App\Establecimiento::create([
+                    'codigo' => (int)$row->codigo_nuevo_establecimiento,
+                    'nombre' => $row->nombre_oficial,
+                    'dependencia' => $row->dependencia,
+                    'comuna_id' => $row->codigo_comuna
+                ]);
+            }
+        });
+    });
+    $this->comment('Fin.');
+})->describe('Importa establecimientos');
