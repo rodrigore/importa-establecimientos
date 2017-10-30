@@ -31,3 +31,23 @@ Artisan::command('importa', function () {
     });
     $this->comment('Fin.');
 })->describe('Importa establecimientos');
+
+Artisan::command('importa:unidades', function () {
+    $this->comment('Importando unidades ...');
+    Excel::load('storage/app/public/unidades.xlsx', function ($reader) {
+        $sheet = $reader->get()->first();
+        $sheet->each(function ($row) {
+            if ($row->nombre) {
+                $servicioNombre = trim(str_replace('Servicio de Salud', '', $row->servicio_de_salud));
+
+                App\UnidadAdministrativa::create([
+                    'nombre' => $row->nombre,
+                    'dependencia' => $row->dependencia,
+                    'comuna_id' => DB::table('comunas')->whereCodigo($row->codigo_comuna)->first()->id,
+                    'servicio_id' => DB::table('servicios')->whereNombre($servicioNombre)->first()->id,
+                ]);
+            }
+        });
+    });
+    $this->comment('Fin.');
+})->describe('Importa unidades administrativas');
